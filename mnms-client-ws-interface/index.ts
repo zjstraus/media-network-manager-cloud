@@ -1,15 +1,13 @@
-
 const mdns = require('multicast-dns')()
 const ws = require('ws');
-var fs = require('fs');
-var uuid = require('uuid/v4');
+const uuid = require('uuid/v4');
 
 let wsc = null;
 
-var mc_target;
-var mc_ip
-var mc_port = 16060
-var lookfor_target = false
+let mc_target;
+let mc_ip
+let mc_port = 16060
+let lookfor_target = false
 
 let challenge = "none"
 let callback = (data) => {}
@@ -22,7 +20,7 @@ let info = {
     id: uuid()
 }
 
-function run(target,retry) {
+function run(target: string, retry: boolean) {
     if(retry) exitOnDisco = false
     if(!target) {
         mdns.on('response', function(response) {
@@ -145,7 +143,6 @@ let lastSend = 0;
 let sendTime = 15000;
 
 export = {
-
     run: run,
     send: (data) => { if(wsc) { 
         console.log("sendings...") ; 

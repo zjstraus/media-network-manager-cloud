@@ -1,7 +1,6 @@
 "use strict";
 var mdns = require('multicast-dns')();
 var ws = require('ws');
-var fs = require('fs');
 var uuid = require('uuid/v4');
 var wsc = null;
 var mc_target;
@@ -53,7 +52,7 @@ function run(target, retry) {
             wsc = new ws('wss://' + target + ':' + mc_port, {
                 //protocolVersion: 8,
                 origin: 'wss://' + target + ':' + mc_port,
-                rejectUnauthorized: false
+                rejectUnauthorized: false,
             });
             wsc.on('open', function open() {
                 wsc.send(JSON.stringify({
@@ -92,7 +91,7 @@ function run(target, retry) {
                     wsc = new ws('wss://' + k.name + ':' + mc_port, {
                         //protocolVersion: 8,
                         origin: 'wss://' + k.name + ':' + mc_port,
-                        rejectUnauthorized: false
+                        rejectUnauthorized: false,
                     });
                     wsc.on('open', function open() {
                         wsc.send(JSON.stringify({
