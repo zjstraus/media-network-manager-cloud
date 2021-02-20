@@ -306,7 +306,7 @@ module.exports = function (LocalOptions) {
     // Shaping and linking data
     //-----------
     let node_timers = [];
-    let mergeNodesTimer = (index, newValue, Name) => {
+    let mergeNodesTimer = (index, newValue) => {
         if (newValue._Timers) {
             if (!Nodes[index]._Timers)
                 Nodes[index]._Timers = [];
@@ -333,7 +333,7 @@ module.exports = function (LocalOptions) {
     };
     let mergeNodesUIParams = (index) => {
         if (!Nodes[index].UIParams) {
-            console.error("Built new params");
+            console.log(`Building new UIParams for index ${index}`);
             Nodes[index].UIParams = {
                 Ports: {
                     showUnplugged: true,
@@ -481,7 +481,7 @@ module.exports = function (LocalOptions) {
     function mergeNodes(index, newValue, Name) {
         index = findCandidates(newValue) || index;
         if (!index || index < 0 || index > Nodes.length) {
-            console.error("Could not find a node");
+            console.log(`Adding node "${newValue.Name}"`);
             let holder = {
                 Name: newValue.Name,
                 Type: "disconnected",
@@ -495,7 +495,7 @@ module.exports = function (LocalOptions) {
             index = Nodes.push(holder) - 1;
         }
         mergeNodesUIParams(index);
-        mergeNodesTimer(index, newValue, Name);
+        mergeNodesTimer(index, newValue);
         switch (newValue.Type) {
             case "switch":
                 mergeNodesSwitch(index, newValue, Name);

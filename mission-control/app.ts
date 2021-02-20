@@ -323,7 +323,7 @@ export = function (LocalOptions) {
     //-----------
 
     let node_timers = []
-    let mergeNodesTimer = (index: number, newValue: MnMs_node, Name: string) => {
+    let mergeNodesTimer = (index: number, newValue: MnMs_node) => {
         if (newValue._Timers) {
             if (!Nodes[index]._Timers) Nodes[index]._Timers = []
             for (let t of newValue._Timers) {
@@ -344,9 +344,9 @@ export = function (LocalOptions) {
         }
     }
 
-    let mergeNodesUIParams = (index) => {
+    let mergeNodesUIParams = (index: number) => {
         if (!Nodes[index].UIParams) {
-            console.error("Built new params")
+            console.log(`Building new UIParams for index ${index}`)
             Nodes[index].UIParams = {
                 Ports: {
                     showUnplugged: true,
@@ -483,7 +483,7 @@ export = function (LocalOptions) {
     function mergeNodes(index: number, newValue: MnMs_node, Name: string) {
         index = findCandidates(newValue) || index
         if (!index || index < 0 || index > Nodes.length) {
-            console.error("Could not find a node")
+            console.log(`Adding node "${newValue.Name}"`)
             let holder: MnMs_node = {
                 Name: newValue.Name,
                 Type: "disconnected",
@@ -498,7 +498,7 @@ export = function (LocalOptions) {
         }
 
         mergeNodesUIParams(index)
-        mergeNodesTimer(index, newValue, Name)
+        mergeNodesTimer(index, newValue)
         switch (newValue.Type) {
             case "switch":
                 mergeNodesSwitch(index, newValue, Name)
