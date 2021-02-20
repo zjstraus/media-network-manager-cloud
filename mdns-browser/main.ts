@@ -1,2 +1,1 @@
-var mdns = require("./index.js")
-
+const mdns = require("./index.js")

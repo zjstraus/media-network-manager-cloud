@@ -2,38 +2,43 @@
 var arp = require('node-arp');
 var dns_txt = require('dns-txt')();
 var uniqid = require('uniqid');
-module.exports = function (cb, _mdns) {
-    var mdns;
-    var Hosts = {};
-    var Services = {};
-    var getMacClear = true;
-    var id_local = 0;
-    var sendNode = function (Value) { };
+module.exports = (cb, _mdns) => {
+    let mdns;
+    let Hosts = {};
+    let Services = {};
+    let getMacClear = true;
+    let id_local = 0;
+    let sendNode = function (Value) {
+    };
     function handleResponse(response) {
-        for (var _i = 0, _a = response.answers; _i < _a.length; _i++) {
-            var k = _a[_i];
+        for (let k of response.answers) {
             handleItem(k);
         }
-        for (var _b = 0, _c = response.additionals; _b < _c.length; _b++) {
-            var k = _c[_b];
+        for (let k of response.additionals) {
             handleItem(k);
         }
         function waitClearGetMac(k) {
             if (!k)
                 return;
             if (!getMacClear) {
-                setTimeout(function () { waitClearGetMac(k); }, 100);
+                setTimeout(() => {
+                    waitClearGetMac(k);
+                }, 100);
             }
             else {
                 getMacClear = false;
                 arp.getMAC(k.data, function (err, mac) {
                     if (!err && mac && mac.length > 12) {
-                        var macout_1 = [];
-                        mac.split(":").forEach(function (e, i, a) { if (e.length < 2)
-                            macout_1[i] = "0" + e;
-                        else
-                            macout_1[i] = e; });
-                        mac = macout_1.join(":");
+                        let macout = [];
+                        mac.split(':').forEach((e, i, a) => {
+                            if (e.length < 2) {
+                                macout[i] = '0' + e;
+                            }
+                            else {
+                                macout[i] = e;
+                            }
+                        });
+                        mac = macout.join(':');
                         Hosts[k.name].Macs.push(mac);
                         Hosts[k.name].Mac = mac;
                         sendNode(Hosts[k.name]);
@@ -43,15 +48,15 @@ module.exports = function (cb, _mdns) {
             }
         }
         function handleItem(k) {
-            var refresh = false;
-            var HostToRefresh = null;
+            let refresh = false;
+            let HostToRefresh = null;
             //if(k.ttl == 0) console.log(k)
-            if (k.type == "SRV") {
+            if (k.type == 'SRV') {
                 HostToRefresh = k.data.target;
                 if (Hosts[k.data.target]) {
                     if (k.ttl > 0) {
-                        var subs = (Hosts[k.data.target].Services[k.name]) ? Hosts[k.data.target].Services[k.name].subs : [];
-                        var txt = (Hosts[k.data.target].Services[k.name]) ? Hosts[k.data.target].Services[k.name].txt : {};
+                        let subs = (Hosts[k.data.target].Services[k.name]) ? Hosts[k.data.target].Services[k.name].subs : [];
+                        let txt = (Hosts[k.data.target].Services[k.name]) ? Hosts[k.data.target].Services[k.name].txt : {};
                         if (Services[k.name]) {
                             refresh = (subs == Services[k.name].subs && txt == Services[k.name].txt) ? refresh : true;
                             subs = Services[k.name].subs;
@@ -62,7 +67,7 @@ module.exports = function (cb, _mdns) {
                         Hosts[k.data.target].Services[k.name] = {
                             port: k.data.port,
                             subs: subs,
-                            txt: txt
+                            txt: txt,
                         };
                     }
                     else {
@@ -73,22 +78,22 @@ module.exports = function (cb, _mdns) {
                     }
                 }
             }
-            else if (k.type == "PTR") {
-                var comps_1 = k.name.split("._");
+            else if (k.type == 'PTR') {
+                let comps = k.name.split('._');
                 if (k.ttl > 0) {
-                    if (comps_1[1] == "sub") {
+                    if (comps[1] == 'sub') {
                         if (!Services[k.data]) {
                             Services[k.data] = {};
                             Services[k.data].subs = [];
                             Services[k.data].txt = null;
                         }
-                        if (!Services[k.data].subs.some(function (p) { return p === comps_1[0]; }) && comps_1[2] == "http")
-                            Services[k.data].subs.push(comps_1[0]);
+                        if (!Services[k.data].subs.some(p => p === comps[0]) && comps[2] == 'http')
+                            Services[k.data].subs.push(comps[0]);
                     }
                 }
                 else {
                     if (Services[k.data]) {
-                        Object.keys(Hosts).forEach(function (key) {
+                        Object.keys(Hosts).forEach(key => {
                             if (Hosts[key].Services[k.data]) {
                                 refresh = true;
                                 HostToRefresh = key;
@@ -100,17 +105,16 @@ module.exports = function (cb, _mdns) {
                 }
                 //console.log(k)
             }
-            else if (k.type == "TXT") {
+            else if (k.type == 'TXT') {
                 if (!Services[k.name]) {
                     Services[k.name] = {};
                     Services[k.name].subs = [];
                     Services[k.name].txt = null;
                 }
                 if (k.data.length > 0) {
-                    var str = Buffer.allocUnsafe(0);
-                    for (var _i = 0, _a = k.data; _i < _a.length; _i++) {
-                        var s = _a[_i];
-                        var size = Buffer.allocUnsafe(1);
+                    let str = Buffer.allocUnsafe(0);
+                    for (let s of k.data) {
+                        let size = Buffer.allocUnsafe(1);
                         size.writeUInt8(s.length, 0);
                         str = Buffer.concat([str, size], str.length + size.length);
                         str = Buffer.concat([str, s], str.length + s.length);
@@ -118,28 +122,28 @@ module.exports = function (cb, _mdns) {
                     Services[k.name].txt = dns_txt.decode(str);
                 }
             }
-            else if (k.type == "A") {
+            else if (k.type == 'A') {
                 //console.log(k)
-                var getmac = false;
+                let getmac = false;
                 HostToRefresh = k.name;
                 if (k.ttl > 0) {
-                    if (!Hosts[k.name] || Hosts[k.name].Type == "disconnected") {
+                    if (!Hosts[k.name] || Hosts[k.name].Type == 'disconnected') {
                         Hosts[k.name] = {
                             Name: k.name,
                             IP: k.data,
-                            Type: "MdnsNode",
+                            Type: 'MdnsNode',
                             Services: {},
                             OtherIPs: [],
                             Macs: [],
                             Schema: 1,
-                            Neighbour: "",
-                            Mac: "",
-                            id: uniqid() + id_local++
+                            Neighbour: '',
+                            Mac: '',
+                            id: uniqid() + id_local++,
                         };
                         getmac = true;
                     }
                     else if (Hosts[k.name].IP != k.data) {
-                        if (!Hosts[k.name].OtherIPs.some(function (p) { return p == k.data; })) {
+                        if (!Hosts[k.name].OtherIPs.some(p => p == k.data)) {
                             Hosts[k.name].OtherIPs.push(Hosts[k.name].IP);
                             Hosts[k.name].IP = k.data;
                             getmac = true;
@@ -150,9 +154,9 @@ module.exports = function (cb, _mdns) {
                     }
                 }
                 else {
-                    console.log("ttl 0");
+                    console.log('ttl 0');
                     if (Hosts[k.name]) {
-                        Hosts[k.name].Type == "disconnected";
+                        Hosts[k.name].Type == 'disconnected';
                         refresh = true;
                     }
                 }
@@ -166,7 +170,7 @@ module.exports = function (cb, _mdns) {
         }
     }
     if (!cb) {
-        console.log("Error, empty callback given");
+        console.log('Error, empty callback given');
         return;
     }
     if (_mdns) {
@@ -175,12 +179,12 @@ module.exports = function (cb, _mdns) {
     else {
         mdns = require('multicast-dns')();
     }
-    mdns.on('response', function (response) {
+    mdns.on('response', (response) => {
         handleResponse(response);
     });
     sendNode = cb;
-    var servToScan = {
-        serv: "_csco-sb._tcp.local",
+    let servToScan = {
+        serv: '_csco-sb._tcp.local',
         next: {
             serv: '_telnet._tcp.local',
             next: {
@@ -194,30 +198,31 @@ module.exports = function (cb, _mdns) {
                             next: {
                                 serv: '_ravenna_session._sub._rtsp._tcp.local',
                                 next: {
-                                    serv: '_netaudio-arc._udp.local'
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+                                    serv: '_netaudio-arc._udp.local',
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
     };
-    setTimeout(function () {
-        console.log("Scanning services");
-        var qq = function (stq) {
-            console.log(stq.serv);
-            mdns.query({ questions: [{ name: stq.serv, type: 'PTR' }] });
-            if (stq.next) {
-                setTimeout(qq, 1000, stq.next);
-            }
-        };
-        qq(servToScan);
-    }, 1000);
-    setTimeout(function () {
-        console.log("Scanning services");
-        var qq = function (stq) {
-            console.log(stq.serv);
+    // setTimeout(() => {
+    //     console.log('Scanning services')
+    //     let qq = (stq) => {
+    //         console.log(stq.serv)
+    //         mdns.query({questions: [{name: stq.serv, type: 'PTR'}]})
+    //         if (stq.next) {
+    //             setTimeout(qq, 1000, stq.next)
+    //         }
+    //     }
+    //
+    //     qq(servToScan)
+    // }, 1000)
+    setTimeout(() => {
+        console.log('Scanning MDNS');
+        let qq = (stq) => {
+            //console.log(stq.serv)
             mdns.query({ questions: [{ name: stq.serv, type: 'PTR' }] });
             if (stq.next) {
                 setTimeout(qq, 1000, stq.next);
@@ -226,3 +231,4 @@ module.exports = function (cb, _mdns) {
         qq(servToScan);
     }, 30000);
 };
+//# sourceMappingURL=index.js.map
