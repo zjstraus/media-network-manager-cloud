@@ -1,7 +1,7 @@
 "use strict";
-var arp = require('node-arp');
-var dns_txt = require('dns-txt')();
-var uniqid = require('uniqid');
+const arp = require('node-arp');
+const dns_txt = require('dns-txt')();
+const uniqid = require('uniqid');
 module.exports = (cb, _mdns) => {
     let mdns;
     let Hosts = {};
