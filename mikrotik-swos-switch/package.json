@@ -1,0 +1,19 @@
+{
+  "name": "mikrotik-swos-switch",
+  "version": "1.0.0",
+  "description": "Mikrotik SwOS switch data miner",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js "
+  },
+  "author": "Zach Strauss",
+  "license": "MIT",
+  "dependencies": {
+    "command-line-args": "^5.1.1",
+    "digest-fetch": "^1.1.6",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^12.7.2"
+  }
+}

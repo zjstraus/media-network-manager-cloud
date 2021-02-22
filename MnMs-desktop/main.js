@@ -95,6 +95,25 @@ var missionControl = require(("media-network-manager-cloud/mission-control"))({
         return null
       }
     }
+    else if(type == "swos_switch") {
+          if(action == "start") {
+              let child_info
+              if(options.Params.Password == "")
+                  child_info = fork(require.resolve('media-network-manager-cloud/mikrotik-swos-switch/app.js'),["-u",options.Params.User,"-i",options.Params.IP,"-k",options.Challenge,"-y",options.UID,"-m","localhost" ]
+                  )
+              else
+                  child_info = fork(require.resolve('media-network-manager-cloud/mikrotik-swos-switch/app.js'),["-p",options.Params.Password,"-u",options.Params.User,"-i",options.Params.IP,"-k",options.Challenge,"-y",options.UID,"-m","localhost" ]
+                  )
+              child_info.on("error",() => {
+                  child_info.kill()
+              })
+              return child_info
+          }
+          else if(action == "stop") {
+              options.Params.Child.kill()
+              return null
+          }
+      }
     else if(type == "artel_switch") {
         if(action == "start") {
         let child_info

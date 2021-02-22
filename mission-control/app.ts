@@ -749,6 +749,21 @@ export = function (LocalOptions) {
                             db.update({Type: "MnmsData"}, blankMnmsData(MnmsData), {upsert: true})
                             console.log(MnmsData)
                         }
+                    } else if (D.Type && (D.Type == "SwOS")) {
+                        if (!MnmsData.Switches.some(k => k.IP == D.IP)) {
+                            MnmsData.Switches.push({
+                                Type: D.Type,
+                                IP: D.IP,
+                                User: D.User,
+                                Password: D.Password,
+                                Child: null,
+                                Timer: null,
+                                StartTime: null,
+                                UID: "manual:switch" + Date.now() + ((encodeURIComponent(D.IP)))
+                            })
+                            db.update({Type: "MnmsData"}, blankMnmsData(MnmsData), {upsert: true})
+                            console.log(MnmsData)
+                        }
                     } else if (D.UserAction) {
                         if (D.UserAction == "remove_service" && D.UID) {
                             console.log("Asked to remove service of UID " + D.UID)
@@ -808,6 +823,7 @@ export = function (LocalOptions) {
     const ServicesDirectory = {
         cisco_switch: "../cisco-switch/app.js",
         artel_switch: "../artel-quarra-switch/index.js",
+        swos_switch: "../mikrotik-swos-switch/app.js",
         snmp_switch: "../snmp-bridge/index.js"
     }
 
@@ -843,6 +859,21 @@ export = function (LocalOptions) {
                     if (ServiceOptions.Params.Child.kill) ServiceOptions.Params.Child.kill()
                     child_info = null;
                 }
+            } else if (type == "swos_switch") {
+                if (action == "start") {
+                    console.log([ServicesDirectory[type], "-p", ServiceOptions.Params.Password || "\"\"", "-u", ServiceOptions.Params.User, "-i", ServiceOptions.Params.IP, "-k", MnmsData.Challenge, "-y", ServiceOptions.UID])
+                    if (ServiceOptions.Params.Password == "")
+                        child_info = spawn("node", [ServicesDirectory[type], "-u", ServiceOptions.Params.User, "-i", ServiceOptions.Params.IP, "-k", MnmsData.Challenge, "-y", ServiceOptions.UID])
+                    else
+                        child_info = spawn("node", [ServicesDirectory[type], "-p", ServiceOptions.Params.Password, "-u", ServiceOptions.Params.User, "-i", ServiceOptions.Params.IP, "-k", MnmsData.Challenge, "-y", ServiceOptions.UID])
+
+                    child_info.on("error", () => {
+                        child_info.kill()
+                    })
+                } else if (action == "stop") {
+                    if (ServiceOptions.Params.Child.kill) ServiceOptions.Params.Child.kill()
+                    child_info = null;
+                }
             } else if (type == "snmp_switch") {
                 if (action == "start") {
                     console.log([ServicesDirectory[type], "-c", ServiceOptions.Params.Community, "-i", ServiceOptions.Params.IP, "-k", MnmsData.Challenge, "-y", ServiceOptions.UID])
@@ -857,6 +888,14 @@ export = function (LocalOptions) {
                     child_info = null;
                 }
             }
+            if (child_info) {
+                child_info.stdout.on('data', (data) => {
+                    console.log(`${type} ${ServiceOptions.UID}:`, data.toString())
+                })
+                child_info.stderr.on('data', (data) => {
+                    console.error(`${type} ${ServiceOptions.UID}:`, data.toString())
+                })
+            }
         }
         return child_info
     }
@@ -864,6 +903,7 @@ export = function (LocalOptions) {
     let switchShort = {
         "ciscoSG": "cisco_switch",
         "artelQ": "artel_switch",
+        "SwOS": 'swos_switch',
         "snmpB": "snmp_switch"
     }
 
